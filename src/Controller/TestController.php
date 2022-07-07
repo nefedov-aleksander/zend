@@ -31,7 +31,7 @@ class TestController extends AbstractRestfulController
         ]);
     }
 
-    #[HttpGet('testget')]
+    #[HttpGet('testget/{id:int}')]
     public function testget()
     {
         return new JsonModel([

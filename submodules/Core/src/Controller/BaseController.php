@@ -46,18 +46,22 @@ abstract class BaseController extends AbstractController
         }
 
         $arguments = [];
-        if($method->getNumberOfParameters() > 0)
+
+        if(in_array($this->getRequest()->getMethod(), [Request::METHOD_GET, Request::METHOD_DELETE]))
         {
-            foreach ($method->getParameters() as $parameter)
+            if ($method->getNumberOfParameters() > 0)
             {
-                $param = $e->getRouteMatch()->getParam($parameter->getName());
-
-                if($param === null)
+                foreach ($method->getParameters() as $parameter)
                 {
-                    throw new ArgumentCountError("Too few arguments to function. Argument '{$parameter->getName()}' not found in route '{$e->getRouteMatch()->getMatchedRouteName()}'");
-                }
+                    $param = $e->getRouteMatch()->getParam($parameter->getName());
 
-                $arguments[] = $param;
+                    if ($param === null)
+                    {
+                        throw new ArgumentCountError("Too few arguments to function. Argument '{$parameter->getName()}' not found in route '{$e->getRouteMatch()->getMatchedRouteName()}'");
+                    }
+
+                    $arguments[] = $param;
+                }
             }
         }
 

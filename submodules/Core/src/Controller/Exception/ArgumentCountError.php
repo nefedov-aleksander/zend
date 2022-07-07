@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Bpm\Test\Core\Controller\Exception;
+namespace Bpm\Core\Controller\Exception;
 
 
 class ArgumentCountError extends \ArgumentCountError

@@ -5,7 +5,7 @@ namespace Bpm\Core\Controller;
 
 
 use Bpm\Common\Str;
-use Bpm\Test\Core\Controller\Exception\ArgumentCountError;
+use Bpm\Core\Controller\Exception\ArgumentCountError;
 use Zend\Http\Request;
 use Zend\Http\Response;
 use Zend\Mvc\Controller\AbstractController;

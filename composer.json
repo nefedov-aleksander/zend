@@ -1,0 +1,32 @@
+{
+    "name": "bpm/crm",
+    "description": "private crm servive",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Bpm\\Crm\\": "src/",
+            "Bpm\\Core\\": "submodules/Core/src/",
+            "Bpm\\Common\\": "submodules/Common/src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Bpm\\Test\\": "tests/",
+            "Bpm\\Test\\Core\\": "submodules/Core/tests"
+        }
+    },
+    "authors": [
+        {
+            "name": "lary"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": "^5.6 || ^7.0 || ^8.0",
+        "zendframework/zendframework": "3.0.0",
+        "php-ds/php-ds": "dev-master"
+    },
+    "scripts": {
+        "test": "phpunit"
+    }
+}

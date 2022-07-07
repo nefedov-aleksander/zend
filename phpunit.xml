@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit colors="true">
+    <testsuites>
+        <testsuite name="Crm">
+            <directory>./tests</directory>
+        </testsuite>
+        <testsuite name="Core">
+            <directory>./submodules/Core/tests</directory>
+        </testsuite>
+        <testsuite name="Common">
+            <directory>./submodules/Common/tests</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

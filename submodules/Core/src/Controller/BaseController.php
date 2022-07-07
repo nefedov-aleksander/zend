@@ -5,6 +5,7 @@ namespace Bpm\Core\Controller;
 
 
 use Bpm\Common\Str;
+use Bpm\Test\Core\Controller\Exception\ArgumentCountError;
 use Zend\Http\Request;
 use Zend\Http\Response;
 use Zend\Mvc\Controller\AbstractController;
@@ -49,7 +50,14 @@ abstract class BaseController extends AbstractController
         {
             foreach ($method->getParameters() as $parameter)
             {
-                $arguments[] = $e->getRouteMatch()->getParam($parameter->getName());
+                $param = $e->getRouteMatch()->getParam($parameter->getName());
+
+                if($param === null)
+                {
+                    throw new ArgumentCountError("Too few arguments to function. Argument '{$parameter->getName()}' not found in route '{$e->getRouteMatch()->getMatchedRouteName()}'");
+                }
+
+                $arguments[] = $param;
             }
         }
 

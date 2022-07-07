@@ -5,6 +5,7 @@ namespace Bpm\Test\Core\Controller;
 
 
 use Bpm\Core\Controller\BaseController;
+use Bpm\Test\Core\Controller\Exception\ArgumentCountError;
 use PHPUnit\Framework\TestCase;
 use Zend\Http\Response;
 use Zend\Mvc\Exception\InvalidArgumentException;
@@ -110,6 +111,26 @@ class BaseControllerTest extends TestCase
         $controller->expects($this->once())
             ->method('test')
             ->with(1, 'some string');
+
+        $controller->onDispatch($event);
+    }
+
+    public function testOnDispatchCallMethodWithNonExistArgument()
+    {
+        $this->expectException(ArgumentCountError::class);
+
+        $routeMatchMock = $this->createMock(RouteMatch::class);
+        $routeMatchMock->method('getParam')
+            ->will($this->returnValueMap([
+                ['action', null, 'test']
+            ]));
+
+        $event = new MvcEvent();
+        $event->setRouteMatch($routeMatchMock);
+
+        $controller = $this->getMockBuilder(MockController::class)
+            ->onlyMethods(['test'])
+            ->getMock();
 
         $controller->onDispatch($event);
     }

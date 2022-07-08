@@ -192,9 +192,61 @@ class BaseControllerTest extends TestCase
         ];
     }
 
-    public function testOnDispatchCallPostAndPutMethods()
+    /**
+     * @dataProvider onDispatchCallPostAndPutMethodsProvider
+     */
+    public function testOnDispatchCallPostAndPutMethods(
+        string $action,
+        string $method,
+        array $routeMap,
+        array $postParams,
+        array $exceptArgumetns)
     {
-        $this->assertTrue(false);
+        $routeMatchMock = $this->createMock(RouteMatch::class);
+        $routeMatchMock->expects($this->any())
+            ->method('getParam')
+            ->will($this->returnValueMap($routeMap));
+
+        $requestMock = $this->createMock(Request::class);
+        $requestMock->expects($this->once())
+            ->method('getMethod')
+            ->willReturn($method);
+        $requestMock->expects($this->once())
+            ->method('getPost')
+            ->willReturn($postParams);
+
+
+        $event = new MvcEvent();
+        $event->setRouteMatch($routeMatchMock);
+
+        $controller = $this->getMockBuilder(MockController::class)
+            ->onlyMethods([$action, 'getRequest'])
+            ->getMockForAbstractClass();
+
+        $controller->method('getRequest')->willReturn($requestMock);
+
+        $controller
+            ->expects($this->once())
+            ->method($action)
+            ->with(...$exceptArgumetns);;
+
+        $controller->onDispatch($event);
+    }
+
+    private function onDispatchCallPostAndPutMethodsProvider()
+    {
+        return [
+            [
+                'post',
+                Request::METHOD_POST,
+                [
+                    ['action', null, 'post'],
+                    ['id', null,  1]
+                ],
+                [],
+                [1, new MockPostOrPutRequest()]
+            ]
+        ];
     }
 
 }

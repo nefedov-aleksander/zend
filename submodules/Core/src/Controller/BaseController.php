@@ -47,20 +47,44 @@ abstract class BaseController extends AbstractController
 
         $arguments = [];
 
-        if(in_array($this->getRequest()->getMethod(), [Request::METHOD_GET, Request::METHOD_DELETE]))
-        {
-            if ($method->getNumberOfParameters() > 0)
-            {
-                foreach ($method->getParameters() as $parameter)
-                {
+        // проверить параметры контролера на наличие типа hasType, если его нет бросать исключение
+
+        if ($method->getNumberOfParameters() > 0) {
+
+            $requestType = $this->getRequest()->getMethod();
+
+            if (in_array($requestType, [Request::METHOD_GET, Request::METHOD_DELETE])) {
+                foreach ($method->getParameters() as $parameter) {
                     $param = $e->getRouteMatch()->getParam($parameter->getName());
 
-                    if ($param === null)
-                    {
+                    if ($param === null) {
                         throw new ArgumentCountError("Too few arguments to function. Argument '{$parameter->getName()}' not found in route '{$e->getRouteMatch()->getMatchedRouteName()}'");
                     }
 
                     $arguments[] = $param;
+                }
+
+            }
+
+            if ($requestType == Request::METHOD_POST) {
+                foreach ($method->getParameters() as $parameter) {
+
+                    if($parameter->getType()->isBuiltin())
+                    {
+                        $param = $e->getRouteMatch()->getParam($parameter->getName());
+
+                        if ($param === null) {
+                            throw new ArgumentCountError("Too few arguments to function. Argument '{$parameter->getName()}' not found in route '{$e->getRouteMatch()->getMatchedRouteName()}'");
+                        }
+
+                        $arguments[] = $param;
+                    }
+                    else
+                    {
+                        $this->getRequest()->getPost();
+                        $class = $parameter->getType()->getName();
+                        $arguments[] = new $class();
+                    }
                 }
             }
         }

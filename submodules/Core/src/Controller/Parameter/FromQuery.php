@@ -7,7 +7,7 @@ use Attribute;
 use Zend\Http\Request;
 
 #[Attribute(Attribute::TARGET_PARAMETER)]
-class FromQuery extends AbstractObjectParameter implements ParameterInterface
+class FromQuery extends AbstractFromParameter implements ParameterInterface
 {
 
     private string $mapper;

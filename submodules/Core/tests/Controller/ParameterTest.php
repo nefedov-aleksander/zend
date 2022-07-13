@@ -20,7 +20,7 @@ class ParameterTest extends TestCase
 {
     public function testFromQuery()
     {
-        $from = new FromQuery(Mapper::class);
+        $from = new FromQuery(ParameterTestMapper::class);
 
         $this->assertInstanceOf(ParameterInterface::class, $from);
 
@@ -40,14 +40,14 @@ class ParameterTest extends TestCase
     {
         $this->expectException(InvalidMapperException::class);
 
-        $from = new FromQuery(EmptyMapper::class);
+        $from = new FromQuery(ParameterTestEmptyMapper::class);
 
         $from->map(new Request(), \stdClass::class);
     }
 
     public function testFromPost()
     {
-        $from = new FromPost(Mapper::class);
+        $from = new FromPost(ParameterTestMapper::class);
 
         $this->assertInstanceOf(ParameterInterface::class, $from);
 
@@ -76,7 +76,7 @@ class ParameterTest extends TestCase
     {
         $this->expectException(InvalidMapperException::class);
 
-        $from = new FromQuery(EmptyMapper::class);
+        $from = new FromQuery(ParameterTestEmptyMapper::class);
 
         $from->map(new Request(), \stdClass::class);
     }
@@ -135,7 +135,7 @@ class ParameterTest extends TestCase
         $request->setHeaders($headers);
         $request->setContent($contentString);
 
-        $from = new FromPost(Mapper::class);
+        $from = new FromPost(ParameterTestMapper::class);
         $result = $from->map($request, \stdClass::class);
 
         $this->assertEquals($expectedId, $result->id);
@@ -151,7 +151,7 @@ class ParameterTest extends TestCase
         $headers->addHeader(new ContentType('text/plain'));
         $request->setHeaders($headers);
 
-        $from = new FromPost(Mapper::class);
+        $from = new FromPost(ParameterTestMapper::class);
         $from->map($request, \stdClass::class);
     }
 
@@ -208,7 +208,7 @@ class ParameterTest extends TestCase
         string $expectedName
     )
     {
-        $from = new FromBody(Mapper::class);
+        $from = new FromBody(ParameterTestMapper::class);
         $this->assertInstanceOf(ParameterInterface::class, $from);
 
         $request = new Request();
@@ -238,12 +238,12 @@ class ParameterTest extends TestCase
         $request->setHeaders($headers);
         $request->setContent('   bad_content_string');
 
-        $from = new FromBody(Mapper::class);
+        $from = new FromBody(ParameterTestMapper::class);
         $from->map($request, \stdClass::class);
     }
 }
 
-class Mapper
+class ParameterTestMapper
 {
     public static function mapPost(Parameters $parameters): \stdClass
     {
@@ -259,4 +259,4 @@ class Mapper
     }
 }
 
-class EmptyMapper{}
+class ParameterTestEmptyMapper{}

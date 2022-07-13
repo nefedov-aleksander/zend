@@ -11,7 +11,7 @@ use Zend\Http\Request;
 use Zend\Json\Json;
 use Zend\Stdlib\Parameters;
 
-#[Attribute(Attribute::TARGET_PARAMETER)]
+#[Attribute(Attribute::TARGET_CLASS)]
 class FromBody extends AbstractJsonContentParameter implements ParameterInterface
 {
     const CONTENT_TYPE_JSON = 'json';
@@ -32,7 +32,7 @@ class FromBody extends AbstractJsonContentParameter implements ParameterInterfac
 
     public function map(Request $request, string $exceptedClass)
     {
-        $mapper = $this->getMapper(new \ReflectionClass($this->mapper), $exceptedClass);
+        $mapper = $this->getMapper($this->mapper, $exceptedClass);
 
         $contentType = $this->getContentType($request, new ContentType('text/plain'));
 

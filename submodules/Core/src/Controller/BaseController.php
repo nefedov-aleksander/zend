@@ -6,10 +6,11 @@ namespace Bpm\Core\Controller;
 
 use Bpm\Common\Str;
 use Bpm\Core\Controller\Exception\ArgumentCountError;
+use Bpm\Core\Controller\Exception\InvalidArgumentException;
+use Bpm\Core\Controller\Parameter\ParameterInterface;
 use Zend\Http\Request;
 use Zend\Http\Response;
 use Zend\Mvc\Controller\AbstractController;
-use Zend\Mvc\Exception\InvalidArgumentException;
 use Zend\Mvc\MvcEvent;
 use Zend\Stdlib\RequestInterface;
 use Zend\Stdlib\ResponseInterface;
@@ -19,7 +20,7 @@ abstract class BaseController extends AbstractController
     public function dispatch(RequestInterface $request, ResponseInterface $response = null)
     {
         if (! $request instanceof Request) {
-            throw new InvalidArgumentException('Expected an HTTP request');
+            throw new \Zend\Mvc\Exception\InvalidArgumentException('Expected an HTTP request');
         }
 
         return parent::dispatch($request, $response);
@@ -45,50 +46,58 @@ abstract class BaseController extends AbstractController
             return $response;
         }
 
-        $arguments = [];
+        $method->invoke($this, ...$this->getActionArguments($method, $e));
+    }
+
+    private function getActionArguments(\ReflectionMethod $method, MvcEvent $e)
+    {
+        if($method->getNumberOfParameters() == 0)
+        {
+            return [];
+        }
 
         // проверить параметры контролера на наличие типа hasType, если его нет бросать исключение
 
-        if ($method->getNumberOfParameters() > 0) {
+        $arguments = [];
 
-            $requestType = $this->getRequest()->getMethod();
-
-            if (in_array($requestType, [Request::METHOD_GET, Request::METHOD_DELETE])) {
-                foreach ($method->getParameters() as $parameter) {
-                    $param = $e->getRouteMatch()->getParam($parameter->getName());
-
-                    if ($param === null) {
-                        throw new ArgumentCountError("Too few arguments to function. Argument '{$parameter->getName()}' not found in route '{$e->getRouteMatch()->getMatchedRouteName()}'");
-                    }
-
-                    $arguments[] = $param;
-                }
-
+        foreach ($method->getParameters() as $parameter) {
+            if(!$parameter->hasType())
+            {
+                throw new InvalidArgumentException("Parameter {$parameter->getName()} has no type in {$method->getDeclaringClass()->getName()}::{$method->getName()}");
             }
 
-            if ($requestType == Request::METHOD_POST) {
-                foreach ($method->getParameters() as $parameter) {
-
-                    if($parameter->getType()->isBuiltin())
-                    {
-                        $param = $e->getRouteMatch()->getParam($parameter->getName());
-
-                        if ($param === null) {
-                            throw new ArgumentCountError("Too few arguments to function. Argument '{$parameter->getName()}' not found in route '{$e->getRouteMatch()->getMatchedRouteName()}'");
-                        }
-
-                        $arguments[] = $param;
-                    }
-                    else
-                    {
-                        $this->getRequest()->getPost();
-                        $class = $parameter->getType()->getName();
-                        $arguments[] = new $class();
-                    }
-                }
-            }
+            $arguments[] = $parameter->getType()->isBuiltin()
+                ? $this->getBuiltinArgument($parameter, $e)
+                : $this->getFromArgument($parameter);
         }
 
-        $method->invoke($this, ...$arguments);
+        return $arguments;
+    }
+
+    private function getBuiltinArgument(\ReflectionParameter $parameter, MvcEvent $e)
+    {
+        $param = $e->getRouteMatch()->getParam($parameter->getName());
+
+        if ($param === null) {
+            throw new ArgumentCountError("Too few arguments to function. Argument '{$parameter->getName()}' not found in route '{$e->getRouteMatch()->getMatchedRouteName()}'");
+        }
+
+        return $param;
+    }
+
+    public function getFromArgument(\ReflectionParameter $parameter)
+    {
+        $reflection = new \ReflectionClass($parameter->getType()->getName());
+
+        $attributes = $reflection->getAttributes(ParameterInterface::class, \ReflectionAttribute::IS_INSTANCEOF);
+
+        if(count($attributes) == 0)
+        {
+            throw new InvalidArgumentException("Non builtin parameter '{$parameter->getName()}' must be declared with the attribute instance of " . ParameterInterface::class);
+        }
+
+        $from = array_shift($attributes);
+
+        return $from->newInstance()->map($this->getRequest(), $reflection->getName());
     }
 }

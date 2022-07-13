@@ -6,7 +6,7 @@ namespace Bpm\Core\Controller\Parameter;
 use Attribute;
 use Zend\Http\Request;
 
-#[Attribute(Attribute::TARGET_PARAMETER)]
+#[Attribute(Attribute::TARGET_CLASS)]
 class FromQuery extends AbstractFromParameter implements ParameterInterface
 {
 
@@ -19,7 +19,6 @@ class FromQuery extends AbstractFromParameter implements ParameterInterface
 
     public function map(Request $request, string $exceptedClass)
     {
-        return $this->getMapper(new \ReflectionClass($this->mapper), $exceptedClass)
-            ->invoke(null, $request->getQuery());
+        return $this->getMapper($this->mapper, $exceptedClass)->invoke(null, $request->getQuery());
     }
 }

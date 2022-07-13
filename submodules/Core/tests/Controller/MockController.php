@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Bpm\Test\Core\Controller;
 
 
@@ -12,7 +11,17 @@ class MockController extends BaseController
 
     public function delete(int $id) {}
 
-    public function post(int $id, MockPostOrPutRequest $request) {}
+    public function post(int $id) {}
 
-    public function put(int $id, MockPostOrPutRequest $request) {}
+    public function put(int $id) {}
+
+    public function withoutParameterAttribute(\stdClass $query){}
+
+    public function testFromQuery(int $id, MockFromQueryRequest $query){}
+
+    public function testFromPost(int $id, MockFromPostRequest $post){}
+
+    public function testFromBody(int $id, MockFromBodyRequest $body){}
+
+    public function withoutArgumentType($arg){}
 }

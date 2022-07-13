@@ -12,8 +12,10 @@ abstract class AbstractFromParameter
 {
     const HEADER_CONTENT_TYPE = 'content-type';
 
-    protected function getMapper(\ReflectionClass $reflection, string $exceptedClass): \ReflectionMethod
+    protected function getMapper(string $mapperClass, string $exceptedClass): \ReflectionMethod
     {
+        $reflection = new \ReflectionClass($mapperClass);
+
         foreach ($reflection->getMethods(\ReflectionMethod::IS_STATIC) as $method)
         {
             if($method->getNumberOfParameters() != 1)

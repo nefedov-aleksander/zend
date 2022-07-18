@@ -4,6 +4,7 @@
 namespace Bpm\Crm\Controller;
 
 
+use Bpm\Core\Controller\BaseController;
 use Bpm\Core\Route\ApiVersion;
 use Bpm\Core\Route\HttpGet;
 use Bpm\Core\Route\HttpPost;
@@ -13,11 +14,12 @@ use Zend\View\Model\JsonModel;
 
 #[ApiVersion(1)]
 #[Route('v<version:apiVersion>/test')]
-class TestController extends AbstractRestfulController
+class TestController extends BaseController
 {
     #[HttpGet('get')]
     public function getList()
     {
+//        die('asdfasdfa');
         return new JsonModel([
             'a' => 'b'
         ]);

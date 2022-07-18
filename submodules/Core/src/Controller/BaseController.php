@@ -7,7 +7,9 @@ namespace Bpm\Core\Controller;
 use Bpm\Common\Str;
 use Bpm\Core\Controller\Exception\ArgumentCountError;
 use Bpm\Core\Controller\Exception\InvalidArgumentException;
+use Bpm\Core\Controller\Exception\LogicException;
 use Bpm\Core\Controller\Parameter\ParameterInterface;
+use Bpm\Core\Response\ApiDataInterface;
 use Zend\Http\Request;
 use Zend\Http\Response;
 use Zend\Mvc\Controller\AbstractController;
@@ -34,6 +36,11 @@ abstract class BaseController extends AbstractController
         {
             $response = $this->getResponse();
             $response->setStatusCode(Response::STATUS_CODE_405);
+
+            /**
+             * $e->setResult(ApiDataInterface);
+             */
+
             return $response;
         }
 
@@ -43,10 +50,27 @@ abstract class BaseController extends AbstractController
         {
             $response = $this->getResponse();
             $response->setStatusCode(Response::STATUS_CODE_405);
+
+            /**
+             * $e->setResult(ApiDataInterface);
+             */
+
             return $response;
         }
 
-        $method->invoke($this, ...$this->getActionArguments($method, $e));
+        $result = $method->invoke($this, ...$this->getActionArguments($method, $e));
+
+        if(! ($result instanceof ApiDataInterface))
+        {
+            throw new LogicException("Result it should be ApiDataInterface");
+        }
+
+        $response = $this->getResponse();
+        $response->setStatusCode($result->getStatusCode());
+
+        $e->setResult($result);
+
+        //todo: return ApiDataError if catch invalid data exception
     }
 
     private function getActionArguments(\ReflectionMethod $method, MvcEvent $e)

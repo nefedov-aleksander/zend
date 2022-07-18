@@ -6,6 +6,10 @@ namespace Bpm\Test\Core\Controller;
 
 use Bpm\Core\Controller\BaseController;
 use Bpm\Core\Controller\Exception\ArgumentCountError;
+use Bpm\Core\Controller\Exception\LogicException;
+use Bpm\Core\Response\ApiDataInterface;
+use Bpm\Core\Response\ApiDataOk;
+use Bpm\Core\Response\ApiDataResult;
 use PHPUnit\Framework\TestCase;
 use Zend\Http\Header\ContentType;
 use Zend\Http\Headers;
@@ -87,7 +91,8 @@ class BaseControllerTest extends TestCase
             ->getMockForAbstractClass();
 
         $controller->expects($this->once())
-            ->method('test');
+            ->method('test')
+            ->willReturn(new ApiDataOk());
 
         $controller->onDispatch($event);
     }
@@ -112,7 +117,8 @@ class BaseControllerTest extends TestCase
 
         $controller->expects($this->once())
             ->method('test')
-            ->with(1, 'some string');
+            ->with(1, 'some string')
+            ->willReturn(new ApiDataOk());
 
         $controller->onDispatch($event);
     }
@@ -197,7 +203,8 @@ class BaseControllerTest extends TestCase
 
         $controller->expects($this->once())
             ->method($action)
-            ->with(...$expectedRequest);
+            ->with(...$expectedRequest)
+            ->willReturn(new ApiDataOk());
 
         $controller->onDispatch($event);
     }
@@ -289,4 +296,67 @@ class BaseControllerTest extends TestCase
         $controller->onDispatch($event);
     }
 
+    public function testOnDispatchReturnResponseSetResponse()
+    {
+        $responseMock = $this->createMock(Response::class);
+        $responseMock->expects($this->once())
+            ->method('setStatusCode')
+            ->with($this->equalTo(Response::STATUS_CODE_204));
+
+        $routeMatch = $this->createMock(RouteMatch::class);
+        $routeMatch->method('getParam')
+            ->with($this->equalTo('action'))
+            ->will($this->returnValue('returnResponse'));
+
+        $event = $this->getMockBuilder(MvcEvent::class)
+            ->onlyMethods(['getRouteMatch', 'setResult'])
+            ->getMock();
+        $event->expects($this->once())->method('setResult')->with(new ApiDataOk());
+        $event->method('getRouteMatch')->willReturn($routeMatch);
+
+        $controller = $this->getMockBuilder(MockController::class)
+            ->onlyMethods(['returnResponse', 'getResponse'])
+            ->getMockForAbstractClass();
+        $controller->method('returnResponse')->willReturn(new ApiDataOk());
+        $controller->method('getResponse')->willReturn($responseMock);
+
+        $controller->onDispatch($event);
+    }
+
+    public function testOnDispatchReturnResponseInstanceOfApiDataInterface()
+    {
+        $routeMatch = $this->createMock(RouteMatch::class);
+        $routeMatch->method('getParam')
+            ->with($this->equalTo('action'))
+            ->will($this->returnValue('returnResponse'));
+
+        $event = new MvcEvent();
+        $event->setRouteMatch($routeMatch);
+        $event->setResponse(new Response());
+
+        $controller = new MockController();
+        $controller->setEvent($event);
+
+        $controller->onDispatch($event);
+
+        $this->assertInstanceOf(ApiDataInterface::class, $event->getResult());
+    }
+
+    public function testOnDispatchReturnResponseNotInstanceOfApiDataInterface()
+    {
+        $this->expectException(LogicException::class);
+
+        $routeMatch = $this->createMock(RouteMatch::class);
+        $routeMatch->method('getParam')
+            ->with($this->equalTo('action'))
+            ->will($this->returnValue('returnResponseStd'));
+
+        $event = new MvcEvent();
+        $event->setRouteMatch($routeMatch);
+
+        $controller = new MockController();
+        $controller->setEvent($event);
+
+        $controller->onDispatch($event);
+    }
 }

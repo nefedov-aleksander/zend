@@ -7,7 +7,9 @@ namespace Bpm\Test\Core\Controller;
 use Bpm\Core\Controller\BaseController;
 use Bpm\Core\Controller\Exception\ArgumentCountError;
 use Bpm\Core\Controller\Exception\LogicException;
+use Bpm\Core\Response\ApiDataError;
 use Bpm\Core\Response\ApiDataInterface;
+use Bpm\Core\Response\ApiDataNotFound;
 use Bpm\Core\Response\ApiDataOk;
 use Bpm\Core\Response\ApiDataResult;
 use PHPUnit\Framework\TestCase;
@@ -37,7 +39,7 @@ class BaseControllerTest extends TestCase
         $responseMock = $this->createMock(Response::class);
         $responseMock->expects($this->once())
             ->method('setStatusCode')
-            ->with($this->equalTo(Response::STATUS_CODE_405));
+            ->with($this->equalTo(Response::STATUS_CODE_404));
 
         $event = new MvcEvent();
         $event->setRouteMatch($this->createMock(RouteMatch::class));
@@ -61,7 +63,7 @@ class BaseControllerTest extends TestCase
         $responseMock = $this->createMock(Response::class);
         $responseMock->expects($this->once())
             ->method('setStatusCode')
-            ->with($this->equalTo(Response::STATUS_CODE_405));
+            ->with($this->equalTo(Response::STATUS_CODE_404));
 
         $event = new MvcEvent();
         $event->setRouteMatch($routeMatchMock);
@@ -334,6 +336,7 @@ class BaseControllerTest extends TestCase
         $event->setRouteMatch($routeMatch);
         $event->setResponse(new Response());
 
+
         $controller = new MockController();
         $controller->setEvent($event);
 
@@ -358,5 +361,102 @@ class BaseControllerTest extends TestCase
         $controller->setEvent($event);
 
         $controller->onDispatch($event);
+    }
+
+
+
+    public function testOnDispatchNotAllowedMethodIsEmptyActionSetNotFoundResponse()
+    {
+        $responseMock = $this->createMock(Response::class);
+        $responseMock->expects($this->once())
+            ->method('setStatusCode')
+            ->with($this->equalTo(Response::STATUS_CODE_404));
+
+        $event = new MvcEvent();
+        $event->setRouteMatch($this->createMock(RouteMatch::class));
+
+        $controller = $this->getMockBuilder(MockController::class)
+            ->onlyMethods(['getResponse'])
+            ->getMock();
+        $controller->method('getResponse')->willReturn($responseMock);
+
+        $controller->onDispatch($event);
+
+        $this->assertInstanceOf(ApiDataNotFound::class, $event->getResult());
+    }
+
+    public function testOnDispatchNotAllowedMethodIsActionNotFoundSetNotFoundResponse()
+    {
+        $routeMatchMock = $this->createMock(RouteMatch::class);
+        $routeMatchMock->method('getParam')
+            ->with($this->equalTo('action'))
+            ->will($this->returnValue('notExistMethod'));
+
+        $responseMock = $this->createMock(Response::class);
+        $responseMock->expects($this->once())
+            ->method('setStatusCode')
+            ->with($this->equalTo(Response::STATUS_CODE_404));
+
+        $event = new MvcEvent();
+        $event->setRouteMatch($routeMatchMock);
+
+        $controller = $this->getMockBuilder(MockController::class)
+            ->onlyMethods(['getResponse'])
+            ->getMock();
+        $controller->method('getResponse')->willReturn($responseMock);
+
+        $controller->onDispatch($event);
+
+        $this->assertInstanceOf(ApiDataNotFound::class, $event->getResult());
+    }
+
+    public function testOnDispatchValidationException()
+    {
+        $routeMatchMock = $this->createMock(RouteMatch::class);
+        $routeMatchMock->method('getParam')
+            ->with($this->equalTo('action'))
+            ->will($this->returnValue('throwValidation'));
+
+        $responseMock = $this->createMock(Response::class);
+        $responseMock->expects($this->once())
+            ->method('setStatusCode')
+            ->with($this->equalTo(Response::STATUS_CODE_422));
+
+        $event = new MvcEvent();
+        $event->setRouteMatch($routeMatchMock);
+
+        $controller = $this->getMockBuilder(MockController::class)
+            ->onlyMethods(['getResponse'])
+            ->getMock();
+        $controller->method('getResponse')->willReturn($responseMock);
+
+        $controller->onDispatch($event);
+
+        $this->assertInstanceOf(ApiDataError::class, $event->getResult());
+    }
+
+    public function testOnDispatchValidationListException()
+    {
+        $routeMatchMock = $this->createMock(RouteMatch::class);
+        $routeMatchMock->method('getParam')
+            ->with($this->equalTo('action'))
+            ->will($this->returnValue('throwValidationList'));
+
+        $responseMock = $this->createMock(Response::class);
+        $responseMock->expects($this->once())
+            ->method('setStatusCode')
+            ->with($this->equalTo(Response::STATUS_CODE_422));
+
+        $event = new MvcEvent();
+        $event->setRouteMatch($routeMatchMock);
+
+        $controller = $this->getMockBuilder(MockController::class)
+            ->onlyMethods(['getResponse'])
+            ->getMock();
+        $controller->method('getResponse')->willReturn($responseMock);
+
+        $controller->onDispatch($event);
+
+        $this->assertInstanceOf(ApiDataError::class, $event->getResult());
     }
 }

@@ -5,6 +5,8 @@ namespace Bpm\Test\Core\Controller;
 
 use Bpm\Core\Controller\BaseController;
 use Bpm\Core\Response\ApiDataResult;
+use Bpm\Core\Validation\Exception\ValidationException;
+use Bpm\Core\Validation\Exception\ValidationListException;
 
 class MockController extends BaseController
 {
@@ -58,5 +60,18 @@ class MockController extends BaseController
     public function returnResponseStd()
     {
         return new \stdClass();
+    }
+
+    public function throwValidation()
+    {
+        throw new ValidationException();
+    }
+
+    public function throwValidationList()
+    {
+        throw new ValidationListException([
+            'error 1',
+            'error 2'
+        ]);
     }
 }

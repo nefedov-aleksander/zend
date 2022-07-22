@@ -9,7 +9,11 @@ use Bpm\Core\Controller\Exception\ArgumentCountError;
 use Bpm\Core\Controller\Exception\InvalidArgumentException;
 use Bpm\Core\Controller\Exception\LogicException;
 use Bpm\Core\Controller\Parameter\ParameterInterface;
+use Bpm\Core\Response\ApiDataError;
 use Bpm\Core\Response\ApiDataInterface;
+use Bpm\Core\Response\ApiDataNotFound;
+use Bpm\Core\Validation\Exception\ValidationException;
+use Bpm\Core\Validation\Exception\ValidationListException;
 use Zend\Http\Request;
 use Zend\Http\Response;
 use Zend\Mvc\Controller\AbstractController;
@@ -28,37 +32,41 @@ abstract class BaseController extends AbstractController
         return parent::dispatch($request, $response);
     }
 
-    public function onDispatch(MvcEvent $e)
+    public function onDispatch(MvcEvent $event)
     {
-        $action = $e->getRouteMatch()->getParam('action');
+        $action = $event->getRouteMatch()->getParam('action');
 
         if(Str::isNullOrEmpty($action))
         {
+            $result = new ApiDataNotFound();
             $response = $this->getResponse();
-            $response->setStatusCode(Response::STATUS_CODE_405);
+            $response->setStatusCode($result->getStatusCode());
+            $event->setResult($result);
 
-            /**
-             * $e->setResult(ApiDataInterface);
-             */
-
-            return $response;
+            return $result;
         }
 
         try {
             $method = new \ReflectionMethod($this, $action);
         } catch (\ReflectionException $ex)
         {
+            $result = new ApiDataNotFound();
             $response = $this->getResponse();
-            $response->setStatusCode(Response::STATUS_CODE_405);
+            $response->setStatusCode($result->getStatusCode());
+            $event->setResult($result);
 
-            /**
-             * $e->setResult(ApiDataInterface);
-             */
-
-            return $response;
+            return $result;
         }
 
-        $result = $method->invoke($this, ...$this->getActionArguments($method, $e));
+        try {
+            $result = $method->invoke($this, ...$this->getActionArguments($method, $event));
+        } catch (ValidationException $ex)
+        {
+            $result = new ApiDataError($ex);
+        } catch (ValidationListException $ex)
+        {
+            $result = new ApiDataError($ex);
+        }
 
         if(! ($result instanceof ApiDataInterface))
         {
@@ -68,9 +76,9 @@ abstract class BaseController extends AbstractController
         $response = $this->getResponse();
         $response->setStatusCode($result->getStatusCode());
 
-        $e->setResult($result);
+        $event->setResult($result);
 
-        //todo: return ApiDataError if catch invalid data exception
+        return $result;
     }
 
     private function getActionArguments(\ReflectionMethod $method, MvcEvent $e)
